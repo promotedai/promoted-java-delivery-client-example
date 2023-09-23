@@ -9,6 +9,8 @@ import ai.promoted.delivery.model.Paging;
 import ai.promoted.delivery.model.Request;
 import ai.promoted.delivery.model.UseCase;
 import ai.promoted.delivery.model.UserInfo;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.FileInputStream;
@@ -18,6 +20,7 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Callable;
 
+import java.util.logging.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -46,6 +49,10 @@ public class App implements Callable<Integer>
         defaultValue = "true")
     private boolean onlyLog;
 
+    @Option(names = "--warmup", description = "Whether to warm up the SDK.",
+        defaultValue = "false")
+    private boolean warmup;
+
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new App()).execute(args);
         System.exit(exitCode);
@@ -61,19 +68,17 @@ public class App implements Callable<Integer>
             .withExecutor(Executors.newFixedThreadPool(10))
             .withDeliveryEndpoint(deliveryApiEndpointUrl)
             .withDeliveryApiKey(deliveryApiKey)
+            .withDeliveryTimeoutMillis(250)
             .withMetricsEndpoint(metricsApiEndpointUrl)
             .withMetricsApiKey(metricsApiKey)
-            .withWarmup(true)
+            .withMetricsTimeoutMillis(1000)
+            .withWarmup(warmup)
             .build();
 
         Request request = newTestRequest();
         DeliveryRequest deliveryRequest = new DeliveryRequest(request, null, onlyLog, 0);
-        try {
-            DeliveryResponse response = client.deliver(deliveryRequest);
-            System.out.println("response=" + toJson(response));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        DeliveryResponse response = client.deliver(deliveryRequest);
+        System.out.println("response=" + toJson(response));
         return 0;
     }
 
