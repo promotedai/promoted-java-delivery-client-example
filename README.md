@@ -14,5 +14,6 @@ deliveryApiKey=<get from promoted>
 
 Then run this command.
 ```
+mvn install
 mvn compile exec:java
 ```
