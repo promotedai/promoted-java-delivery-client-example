@@ -52,6 +52,11 @@ public class App implements Callable<Integer>
     }
 
     public Integer call() throws Exception {
+        checkArgument(!deliveryApiEndpointUrl.isEmpty(), "deliveryApiEndpointUrl needs to be specified");
+        checkArgument(!deliveryApiKey.isEmpty(), "deliveryApiKey needs to be specified");
+        checkArgument(!metricsApiEndpointUrl.isEmpty(), "metricsApiEndpointUrl needs to be specified");
+        checkArgument(!metricsApiKey.isEmpty(), "metricsApiKey needs to be specified");
+
         PromotedDeliveryClient client = PromotedDeliveryClient.builder()
             .withExecutor(Executors.newFixedThreadPool(10))
             .withDeliveryEndpoint(deliveryApiEndpointUrl)
@@ -94,5 +99,11 @@ public class App implements Callable<Integer>
         ObjectMapper mapper = new ObjectMapper();
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
         return mapper.writeValueAsString(obj);
+    }
+
+    private static void checkArgument(boolean value, String message) {
+        if (!value) {
+            throw new IllegalArgumentException(message);
+        }
     }
 }
