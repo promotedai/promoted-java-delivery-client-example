@@ -53,6 +53,14 @@ public class App implements Callable<Integer>
         defaultValue = "false")
     private boolean warmup;
 
+    @Option(names = "--shadowTrafficDeliveryRate", description = "shadowTrafficDeliveryRate.",
+        defaultValue = "0.0")
+    private float shadowTrafficDeliveryRate;
+
+    @Option(names = "--blockingShadowTraffic", description = "blockingShadowTraffic.",
+        defaultValue = "false")
+    private boolean blockingShadowTraffic;
+
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new App()).execute(args);
         System.exit(exitCode);
@@ -73,6 +81,8 @@ public class App implements Callable<Integer>
             .withMetricsApiKey(metricsApiKey)
             .withMetricsTimeoutMillis(1000)
             .withWarmup(warmup)
+            .withShadowTrafficDeliveryRate(shadowTrafficDeliveryRate)
+            .withBlockingShadowTraffic(blockingShadowTraffic)
             .build();
 
         Request request = newTestRequest();
