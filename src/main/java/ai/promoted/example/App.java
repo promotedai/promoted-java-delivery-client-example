@@ -54,8 +54,8 @@ public class App implements Callable<Integer>
     private boolean warmup;
 
     @Option(names = "--shadowTrafficDeliveryRate", description = "shadowTrafficDeliveryRate.",
-        defaultValue = "1.0")
-    private float shadowTrafficDeliveryRate = 1.0f;
+        defaultValue = "0.0")
+    private float shadowTrafficDeliveryRate = 0.0f;
 
     @Option(names = "--blockingShadowTraffic", description = "blockingShadowTraffic.",
         defaultValue = "false")
@@ -89,7 +89,6 @@ public class App implements Callable<Integer>
         DeliveryRequest deliveryRequest = new DeliveryRequest(request, null, onlyLog, 0);
         DeliveryResponse response = client.deliver(deliveryRequest);
         System.out.println("response=" + toJson(response));
-
         return 0;
     }
 
