@@ -47,19 +47,19 @@ public class App implements Callable<Integer>
 
     @Option(names = "--onlyLog", description = "Indicates whether to onlyLog the call.",
         defaultValue = "true")
-    private boolean onlyLog;
+    private boolean onlyLog = true;
 
     @Option(names = "--warmup", description = "Whether to warm up the SDK.",
         defaultValue = "false")
     private boolean warmup;
 
     @Option(names = "--shadowTrafficDeliveryRate", description = "shadowTrafficDeliveryRate.",
-        defaultValue = "0.0")
-    private float shadowTrafficDeliveryRate;
+        defaultValue = "1.0")
+    private float shadowTrafficDeliveryRate = 1.0f;
 
     @Option(names = "--blockingShadowTraffic", description = "blockingShadowTraffic.",
         defaultValue = "false")
-    private boolean blockingShadowTraffic;
+    private boolean blockingShadowTraffic = false;
 
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new App()).execute(args);
@@ -73,7 +73,7 @@ public class App implements Callable<Integer>
         checkArgument(!metricsApiKey.isEmpty(), "metricsApiKey needs to be specified");
 
         PromotedDeliveryClient client = PromotedDeliveryClient.builder()
-            .withExecutor(Executors.newFixedThreadPool(10))
+            .withExecutor(Executors.newFixedThreadPool(2))
             .withDeliveryEndpoint(deliveryApiEndpointUrl)
             .withDeliveryApiKey(deliveryApiKey)
             .withDeliveryTimeoutMillis(250)
@@ -89,6 +89,7 @@ public class App implements Callable<Integer>
         DeliveryRequest deliveryRequest = new DeliveryRequest(request, null, onlyLog, 0);
         DeliveryResponse response = client.deliver(deliveryRequest);
         System.out.println("response=" + toJson(response));
+
         return 0;
     }
 
@@ -100,6 +101,7 @@ public class App implements Callable<Integer>
         request.setUseCase(UseCase.SEARCH);
         request.setSearchQuery("query");
         request.setPaging(new Paging().offset(0).size(2));
+        request.setDisablePersonalization(false); // default=false.
         for (int i = 0; i < 3; i++) {
             Insertion insertion = new Insertion();
             insertion.setContentId("content" + i);
