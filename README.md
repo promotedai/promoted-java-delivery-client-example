@@ -17,3 +17,9 @@ Then run this command.
 mvn install
 mvn compile exec:java
 ```
+
+## Running with additional args
+
+```bash
+mvn compile exec:java -Dexec.args="--onlyLog=false"
+```
