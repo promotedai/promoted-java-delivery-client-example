@@ -1,26 +1,16 @@
 package ai.promoted.example;
 
-import ai.promoted.delivery.client.DeliveryException;
 import ai.promoted.delivery.client.DeliveryRequest;
 import ai.promoted.delivery.client.DeliveryResponse;
 import ai.promoted.delivery.client.PromotedDeliveryClient;
-import ai.promoted.delivery.model.Insertion;
-import ai.promoted.delivery.model.Paging;
-import ai.promoted.delivery.model.Request;
-import ai.promoted.delivery.model.UseCase;
-import ai.promoted.delivery.model.UserInfo;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import ai.promoted.proto.common.UserInfo;
+import ai.promoted.proto.delivery.Insertion;
+import ai.promoted.proto.delivery.Paging;
+import ai.promoted.proto.delivery.Request;
+import ai.promoted.proto.delivery.UseCase;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Callable;
 
-import java.util.logging.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -61,6 +51,10 @@ public class App implements Callable<Integer>
         defaultValue = "false")
     private boolean blockingShadowTraffic = false;
 
+    @Option(names = "--useGrpc", description = "Whether to use gRPC for delivery calls.",
+        defaultValue = "true")
+    private boolean useGrpc;
+
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new App()).execute(args);
         System.exit(exitCode);
@@ -83,38 +77,33 @@ public class App implements Callable<Integer>
             .withWarmup(warmup)
             .withShadowTrafficDeliveryRate(shadowTrafficDeliveryRate)
             .withBlockingShadowTraffic(blockingShadowTraffic)
+            .withUseGrpc(useGrpc)
             .build();
 
-        Request request = newTestRequest();
-        DeliveryRequest deliveryRequest = new DeliveryRequest(request, null, onlyLog, 0);
+        Request.Builder requestBuilder = newTestRequestBuilder();
+        DeliveryRequest deliveryRequest = new DeliveryRequest(requestBuilder, null, onlyLog, 0);
         DeliveryResponse response = client.deliver(deliveryRequest);
-        System.out.println("response=" + toJson(response));
+        System.out.println("execution server=" + response.getExecutionServer());
+        System.out.println("client request ID=" + response.getClientRequestId());
+        System.out.println("response=" + response.getResponse());
         return 0;
     }
 
-    private static Request newTestRequest() {
-        Request request = new Request();
-        UserInfo userInfo = new UserInfo();
-        userInfo.setAnonUserId("anonUserId1");
-        request.setUserInfo(userInfo);
-        request.setUseCase(UseCase.SEARCH);
-        request.setSearchQuery("query");
-        request.setPaging(new Paging().offset(0).size(2));
-        request.setDisablePersonalization(false); // default=false.
+    private static Request.Builder newTestRequestBuilder() {
+        Request.Builder requestBuilder = Request.newBuilder();
+        UserInfo.Builder userInfoBuilder = requestBuilder.getUserInfoBuilder();
+        userInfoBuilder.setAnonUserId("anonUserId1");
+        requestBuilder.setUseCase(UseCase.SEARCH);
+        requestBuilder.setSearchQuery("query");
+        requestBuilder.setPaging(Paging.newBuilder().setOffset(0).setSize(2));
+        requestBuilder.setDisablePersonalization(false); // default=false.
         for (int i = 0; i < 3; i++) {
-            Insertion insertion = new Insertion();
-            insertion.setContentId("content" + i);
-            insertion.setRetrievalRank(i);
-            request.addInsertionItem(insertion);
+            Insertion.Builder insertionBuilder = requestBuilder.addInsertionBuilder();
+            insertionBuilder.setContentId("content" + i);
+            insertionBuilder.setRetrievalRank(i);
             // TODO - set custom properties.
         }
-        return request;
-    }
-
-    private static String toJson(Object obj) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-        return mapper.writeValueAsString(obj);
+        return requestBuilder;
     }
 
     private static void checkArgument(boolean value, String message) {
