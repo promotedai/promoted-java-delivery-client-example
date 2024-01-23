@@ -52,7 +52,7 @@ public class App implements Callable<Integer>
     private boolean blockingShadowTraffic = false;
 
     @Option(names = "--useGrpc", description = "Whether to use gRPC for delivery calls.",
-        defaultValue = "false")
+        defaultValue = "true")
     private boolean useGrpc;
 
     public static void main(String[] args) throws Exception {
@@ -91,18 +91,16 @@ public class App implements Callable<Integer>
 
     private static Request.Builder newTestRequestBuilder() {
         Request.Builder requestBuilder = Request.newBuilder();
-        UserInfo.Builder userInfoBuilder = UserInfo.newBuilder();
+        UserInfo.Builder userInfoBuilder = requestBuilder.getUserInfoBuilder();
         userInfoBuilder.setAnonUserId("anonUserId1");
-        requestBuilder.setUserInfo(userInfoBuilder);
         requestBuilder.setUseCase(UseCase.SEARCH);
         requestBuilder.setSearchQuery("query");
         requestBuilder.setPaging(Paging.newBuilder().setOffset(0).setSize(2));
         requestBuilder.setDisablePersonalization(false); // default=false.
         for (int i = 0; i < 3; i++) {
-            Insertion.Builder insertionBuilder = Insertion.newBuilder();
+            Insertion.Builder insertionBuilder = requestBuilder.addInsertionBuilder();
             insertionBuilder.setContentId("content" + i);
             insertionBuilder.setRetrievalRank(i);
-            requestBuilder.addInsertion(insertionBuilder);
             // TODO - set custom properties.
         }
         return requestBuilder;
