@@ -8,6 +8,7 @@ import ai.promoted.proto.delivery.Insertion;
 import ai.promoted.proto.delivery.Paging;
 import ai.promoted.proto.delivery.Request;
 import ai.promoted.proto.delivery.UseCase;
+import com.google.protobuf.Value;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Callable;
 
@@ -36,8 +37,8 @@ public class App implements Callable<Integer>
     private String deliveryApiKey;
 
     @Option(names = "--onlyLog", description = "Indicates whether to onlyLog the call.",
-        defaultValue = "true")
-    private boolean onlyLog = true;
+        defaultValue = "false")
+    private boolean onlyLog = false;
 
     @Option(names = "--warmup", description = "Whether to warm up the SDK.",
         defaultValue = "false")
@@ -52,8 +53,8 @@ public class App implements Callable<Integer>
     private boolean blockingShadowTraffic = false;
 
     @Option(names = "--useGrpc", description = "Whether to use gRPC for delivery calls.",
-        defaultValue = "true")
-    private boolean useGrpc;
+        defaultValue = "false")
+    private boolean useGrpc = false;
 
     public static void main(String[] args) throws Exception {
         int exitCode = new CommandLine(new App()).execute(args);
@@ -95,14 +96,25 @@ public class App implements Callable<Integer>
         userInfoBuilder.setAnonUserId("anonUserId1");
         requestBuilder.setUseCase(UseCase.SEARCH);
         requestBuilder.setSearchQuery("query");
-        requestBuilder.setPaging(Paging.newBuilder().setOffset(0).setSize(2));
+        requestBuilder.setPaging(Paging.newBuilder().setOffset(0).setSize(3));
         requestBuilder.setDisablePersonalization(false); // default=false.
-        for (int i = 0; i < 3; i++) {
-            Insertion.Builder insertionBuilder = requestBuilder.addInsertionBuilder();
-            insertionBuilder.setContentId("content" + i);
-            insertionBuilder.setRetrievalRank(i);
-            // TODO - set custom properties.
-        }
+
+        requestBuilder.getPropertiesBuilder().getStructBuilder()
+            .putFields("category", Value.newBuilder().setStringValue("topic").build())
+            .putFields("priceMin", Value.newBuilder().setNumberValue(10.0).build());
+
+        Insertion.Builder insertionBuilder0 = requestBuilder.addInsertionBuilder();
+        insertionBuilder0.setContentId("content1");
+        insertionBuilder0.setRetrievalRank(0);
+
+        Insertion.Builder insertionBuilder1 = requestBuilder.addInsertionBuilder();
+        insertionBuilder1.setContentId("content2");
+        insertionBuilder1.setRetrievalRank(1);
+
+        Insertion.Builder insertionBuilder2 = requestBuilder.addInsertionBuilder();
+        insertionBuilder2.setContentId("content3");
+        insertionBuilder2.setRetrievalRank(2);
+
         return requestBuilder;
     }
 
